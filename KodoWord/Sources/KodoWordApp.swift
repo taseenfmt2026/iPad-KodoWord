@@ -64,7 +64,12 @@ final class DocumentStore: ObservableObject {
         if let index = selectedIndex {
             return documents[index]
         }
-        return documents[0]
+
+        if let first = documents.first {
+            return first
+        }
+
+        return KodoDocument()
     }
 
     private func load() {
@@ -91,6 +96,7 @@ final class DocumentStore: ObservableObject {
 
     func update(_ action: (inout KodoDocument) -> Void) {
         guard let index = selectedIndex else { return }
+
         action(&documents[index])
         documents[index].modified = Date()
         save()
@@ -199,7 +205,9 @@ struct NativeEditor: UIViewRepresentable {
 
         if !view.attributedText.isEqual(to: attributed) {
             let oldSelection = view.selectedRange
+
             view.attributedText = attributed
+
             view.selectedRange = NSRange(
                 location: min(oldSelection.location, attributed.length),
                 length: 0
@@ -256,12 +264,6 @@ struct ContentView: View {
     @State private var exportType: UTType = .html
 
     var body: some View {
-
-        .onReceive(NotificationCenter.default.publisher(for: .customFontsUpdated)) { _ in
-            CustomFontManager.shared.refresh()
-            customFontNames = UIFont.familyNames.sorted()
-        }
-
         NavigationStack {
             VStack(spacing: 0) {
                 ribbon
@@ -321,6 +323,14 @@ struct ContentView: View {
                 defaultFilename: exportName
             ) { _ in }
         }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: .customFontsUpdated
+            )
+        ) { _ in
+            CustomFontManager.shared.refresh()
+            customFontNames = UIFont.familyNames.sorted()
+        }
     }
 
     // MARK: Ribbon
@@ -359,19 +369,20 @@ struct ContentView: View {
                     Divider().frame(height: 25)
 
                     Menu("Font") {
-    Button("Import Custom Font") {
-        CustomFontManager.shared.chooseFontFile()
-    }
+                        Button("Import Custom Font") {
+                            CustomFontManager.shared.chooseFontFile()
+                        }
 
-    Divider()
+                        Divider()
 
-    ForEach(customFontNames, id: \.self) { name in
-        Button(name) {
-            setFont(name)
-        }
-    }
-}
-Stepper(
+                        ForEach(customFontNames, id: \.self) { name in
+                            Button(name) {
+                                setFont(name)
+                            }
+                        }
+                    }
+
+                    Stepper(
                         "\(Int(fontSize)) pt",
                         value: $fontSize,
                         in: 6...96
@@ -447,16 +458,35 @@ Stepper(
                     }
 
                     Button {
-                        let alert = UIAlertController(title: "Insert Link", message: "Enter URL", preferredStyle: .alert)
-                        alert.addTextField { $0.placeholder = "https://example.com" }
-                        alert.addAction(UIAlertAction(title: "Insert", style: .default) { _ in
-                            guard let value = alert.textFields?.first?.text,
-                                  let url = URL(string: value),
-                                  let editor = editor else { return }
-                            RichTextEngine.insertLink(into: editor, url: url)
-                        })
-                        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                        let alert = UIAlertController(
+                            title: "Insert Link",
+                            message: "Enter URL",
+                            preferredStyle: .alert
+                        )
+
+                        alert.addTextField {
+                            $0.placeholder = "https://example.com"
+                        }
+
+                        alert.addAction(
+                            UIAlertAction(title: "Insert", style: .default) { _ in
+                                guard let value = alert.textFields?.first?.text,
+                                      let url = URL(string: value),
+                                      let editor = editor else { return }
+
+                                RichTextEngine.insertLink(
+                                    into: editor,
+                                    url: url
+                                )
+                            }
+                        )
+
+                        alert.addAction(
+                            UIAlertAction(title: "Cancel", style: .cancel)
+                        )
+
+                        if let scene = UIApplication.shared.connectedScenes.first
+                            as? UIWindowScene,
                            let root = scene.windows.first?.rootViewController {
                             root.present(alert, animated: true)
                         }
@@ -694,21 +724,24 @@ Stepper(
     }
 
     private func setFont(_ name: String) {
-    guard let editor,
-          let font = UIFont(name: name, size: fontSize) else { return }
+        guard let editor,
+              let font = UIFont(name: name, size: fontSize) else { return }
 
-    let range = editor.selectedRange
+        let range = editor.selectedRange
 
-    if range.length > 0 {
-        let mutable = NSMutableAttributedString(attributedString: editor.attributedText)
-        mutable.addAttribute(.font, value: font, range: range)
-        editor.attributedText = mutable
-        editor.selectedRange = range
-        editor.delegate?.textViewDidChange?(editor)
-    } else {
-        editor.typingAttributes[.font] = font
+        if range.length > 0 {
+            let mutable = NSMutableAttributedString(
+                attributedString: editor.attributedText
+            )
+
+            mutable.addAttribute(.font, value: font, range: range)
+            editor.attributedText = mutable
+            editor.selectedRange = range
+            editor.delegate?.textViewDidChange?(editor)
+        } else {
+            editor.typingAttributes[.font] = font
+        }
     }
-}
 
     private func setColor(_ color: UIColor) {
         editor?.typingAttributes[.foregroundColor] = color
@@ -726,6 +759,7 @@ Stepper(
         guard let editor, !search.isEmpty else { return }
 
         let text = editor.text as NSString
+
         let start = min(
             editor.selectedRange.location + editor.selectedRange.length,
             text.length
@@ -868,6 +902,7 @@ Stepper(
 
     private func exportTXT() {
         let text = editor?.text ?? ""
+
         prepareExport(
             Data(text.utf8),
             store.selected.title + ".txt",

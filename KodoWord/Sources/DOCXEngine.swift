@@ -1,10 +1,11 @@
+
 import Foundation
 import ZIPFoundation
 import UIKit
 
 final class DOCXEngine: NSObject, XMLParserDelegate {
-    private var result = NSMutableAttributedString()
-    private var paragraph = NSMutableAttributedString()
+    private var result = NSMutableAttributedString(string: "")
+    private var paragraph = NSMutableAttributedString(string: "")
     private var currentText = ""
     private var bold = false
     private var italic = false
@@ -20,15 +21,19 @@ final class DOCXEngine: NSObject, XMLParserDelegate {
             at: folder,
             withIntermediateDirectories: true
         )
-        defer { try? FileManager.default.removeItem(at: folder) }
+
+        defer {
+            try? FileManager.default.removeItem(at: folder)
+        }
 
         let archive = try Archive(url: url, accessMode: .read)
+
         guard let entry = archive["word/document.xml"] else {
             throw NSError(domain: "KodoWord", code: 1)
         }
 
         let xmlURL = folder.appendingPathComponent("document.xml")
-        try archive.extract(entry, to: xmlURL)
+        _ = try archive.extract(entry, to: xmlURL)
 
         let parser = XMLParser(data: try Data(contentsOf: xmlURL))
         let engine = DOCXEngine()
@@ -50,25 +55,35 @@ final class DOCXEngine: NSObject, XMLParserDelegate {
     ) {
         switch name {
         case "p":
-            paragraph = NSMutableAttributedString()
+            paragraph = NSMutableAttributedString(string: "")
+
         case "b":
             bold = true
+
         case "i":
             italic = true
+
         case "u":
             underline = true
+
         case "sz":
-            if let value = attributes["val"], let size = Double(value) {
+            if let value = attributes["val"],
+               let size = Double(value) {
                 fontSize = CGFloat(size) / 2
             }
+
         case "t":
             insideText = true
+
         default:
             break
         }
     }
 
-    func parser(_ parser: XMLParser, foundCharacters string: String) {
+    func parser(
+        _ parser: XMLParser,
+        foundCharacters string: String
+    ) {
         if insideText {
             currentText += string
         }
@@ -82,25 +97,42 @@ final class DOCXEngine: NSObject, XMLParserDelegate {
     ) {
         switch name {
         case "t":
+            var traits = UIFontDescriptor.SymbolicTraits()
+
+            if bold {
+                traits.insert(.traitBold)
+            }
+
+            if italic {
+                traits.insert(.traitItalic)
+            }
+
+            let baseFont = UIFont.systemFont(ofSize: fontSize)
+
+            let descriptor = baseFont.fontDescriptor
+                .withSymbolicTraits(traits)
+                ?? baseFont.fontDescriptor
+
             let font = UIFont(
-                descriptor: UIFont.systemFont(ofSize: fontSize).fontDescriptor
-                    .withSymbolicTraits(
-                        (bold ? .traitBold : [])
-                        .union(italic ? .traitItalic : [])
-                    ) ?? UIFont.systemFont(ofSize: fontSize).fontDescriptor,
+                descriptor: descriptor,
                 size: fontSize
             )
 
-            var attributes: [NSAttributedString.Key: Any] = [.font: font]
+            var attributes: [NSAttributedString.Key: Any] = [
+                .font: font
+            ]
 
             if underline {
-                attributes[.underlineStyle] = NSUnderlineStyle.single.rawValue
+                attributes[.underlineStyle] =
+                    NSUnderlineStyle.single.rawValue
             }
 
-            paragraph.append(NSAttributedString(
-                string: currentText,
-                attributes: attributes
-            ))
+            paragraph.append(
+                NSAttributedString(
+                    string: currentText,
+                    attributes: attributes
+                )
+            )
 
             currentText = ""
             insideText = false
@@ -108,6 +140,7 @@ final class DOCXEngine: NSObject, XMLParserDelegate {
         case "p":
             result.append(paragraph)
             result.append(NSAttributedString(string: "\n"))
+
             bold = false
             italic = false
             underline = false
