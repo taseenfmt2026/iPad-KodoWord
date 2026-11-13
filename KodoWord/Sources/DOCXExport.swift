@@ -1,3 +1,4 @@
+
 import Foundation
 import UIKit
 import ZIPFoundation
@@ -21,7 +22,9 @@ enum DOCXExport {
                 (text.string as NSString).substring(with: range)
             )
 
-            let font = attrs[.font] as? UIFont ?? UIFont.systemFont(ofSize: 12)
+            let font = attrs[.font] as? UIFont
+                ?? UIFont.systemFont(ofSize: 12)
+
             let bold = font.fontDescriptor.symbolicTraits.contains(.traitBold)
             let italic = font.fontDescriptor.symbolicTraits.contains(.traitItalic)
             let underline = attrs[.underlineStyle] != nil
@@ -61,16 +64,20 @@ enum DOCXExport {
         """
 
         try? FileManager.default.removeItem(at: url)
+
         let archive = try Archive(url: url, accessMode: .create)
 
         func add(_ path: String, _ content: String) throws {
             let data = Data(content.utf8)
+
             try archive.addEntry(
                 with: path,
                 type: .file,
-                uncompressedSize: Int64(data.count),
+                uncompressedSize: UInt32(data.count),
                 provider: { position, size in
-                    data.subdata(in: Int(position)..<Int(position + size))
+                    let start = Int(position)
+                    let length = Int(size)
+                    data.subdata(in: start..<(start + length))
                 }
             )
         }
