@@ -16,13 +16,13 @@ jobs:
         run: brew install xcodegen
 
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: xcodegen generate --spec KodoWord/project.yml
 
       - name: Build unsigned iPad app
         run: |
           xcodebuild \
-            -project Kodoword.xcodeproj \
-            -scheme Kodoword \
+            -project KodoWord/KodoWord.xcodeproj \
+            -scheme KodoWord \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
@@ -32,7 +32,7 @@ jobs:
       - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/Kodoword.app Payload/
+          cp -R build/Build/Products/Release-iphoneos/KodoWord.app Payload/
           zip -r KodoWord-unsigned.ipa Payload
 
       - uses: actions/upload-artifact@v4
