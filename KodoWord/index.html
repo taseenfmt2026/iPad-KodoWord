@@ -1,0 +1,245 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#246bc7">
+  <title>KodoWord — Document Editor</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.3/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button class="brand" id="homeBtn" title="KodoWord Home">
+        <span class="brand-icon">K</span>
+        <span>Kodo<span class="brand-light">Word</span></span>
+      </button>
+
+      <div class="document-title-area">
+        <input id="documentTitle" value="My Document.docx" aria-label="Document name">
+        <span id="saveStatus">Saved</span>
+      </div>
+
+      <div class="top-actions">
+        <button id="newDocBtn" class="btn btn-light">＋ New</button>
+        <button id="exportBtn" class="btn btn-primary">Export ▾</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="pages-heading"><strong>Pages</strong><button id="sidebarNewBtn" class="page-add" title="New document">＋</button></div>
+
+        <div class="side-heading">DOCUMENTS</div>
+        <div id="docList" class="doc-list"></div>
+
+        <div class="sidebar-bottom">
+          <div class="side-brand-mark">K</div>
+          <div>
+            <strong>KodoWord</strong>
+            <small>Free document editor</small>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <div class="toolbar-wrap">
+          <nav class="ribbon-tabs" aria-label="Editor tabs">
+            <button class="ribbon-tab active" data-tab="Home">Home</button><button class="ribbon-tab" data-tab="Insert">Insert</button><button class="ribbon-tab" data-tab="Draw">Draw</button><button class="ribbon-tab" data-tab="Design">Design</button><button class="ribbon-tab" data-tab="Layout">Layout</button><button class="ribbon-tab" data-tab="References">References</button><button class="ribbon-tab" data-tab="Review">Review</button><button class="ribbon-tab" data-tab="View">View</button><button class="ribbon-tab" data-tab="Help">Help</button>
+          </nav>
+          <div class="toolbar-row main-toolbar">
+            <button class="tool-btn" data-cmd="undo" title="Undo">↶</button>
+            <button class="tool-btn" data-cmd="redo" title="Redo">↷</button>
+            <span class="tool-divider"></span>
+
+            <select id="formatBlock" title="Paragraph style">
+              <option value="p">Normal text</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+              <option value="blockquote">Quote</option>
+              <option value="pre">Code</option>
+            </select>
+
+            <select id="fontFamily" title="Font family">
+              <option value="Arial">Arial</option>
+              <option value="Calibri">Calibri</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Georgia">Georgia</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="SutonnyMJ">SutonnyMJ</option>
+              <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+              <option value="SolaimanLipi">SolaimanLipi</option>
+            </select>
+
+            <input id="fontSize" class="font-size-input" type="number" min="6" max="200" value="12" title="Font size (pt)">
+            <span class="tool-divider"></span>
+
+            <button class="tool-btn" data-cmd="bold" title="Bold"><b>B</b></button>
+            <button class="tool-btn" data-cmd="italic" title="Italic"><i>I</i></button>
+            <button class="tool-btn" data-cmd="underline" title="Underline"><u>U</u></button>
+            <button class="tool-btn" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+          </div>
+
+          <div class="toolbar-row">
+            <label class="color-tool" title="Text color">
+              <span>A</span><span class="color-underline"></span>
+              <input id="textColor" type="color" value="#202124" aria-label="Text color">
+            </label>
+
+            <label class="color-tool highlight-tool" title="Highlight color">
+              <span>▰</span><span class="highlight-underline"></span>
+              <input id="highlightColor" type="color" value="#fff176" aria-label="Highlight color">
+            </label>
+
+            <span class="tool-divider"></span>
+            <button class="tool-btn" data-cmd="justifyLeft" title="Align left">☰</button>
+            <button class="tool-btn" data-cmd="justifyCenter" title="Center">≡</button>
+            <button class="tool-btn" data-cmd="justifyRight" title="Align right">☷</button>
+            <button class="tool-btn" data-cmd="justifyFull" title="Justify">▤</button>
+            <span class="tool-divider"></span>
+
+            <button class="tool-btn" data-cmd="insertUnorderedList" title="Bulleted list">•≡</button>
+            <button class="tool-btn" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+            <button class="tool-btn" data-cmd="outdent" title="Decrease indent">⇤</button>
+            <button class="tool-btn" data-cmd="indent" title="Increase indent">⇥</button>
+
+            <select id="lineSpacing" title="Line spacing">
+              <option value="1">Line: 1.0</option>
+              <option value="1.15">Line: 1.15</option>
+              <option value="1.5" selected>Line: 1.5</option>
+              <option value="2">Line: 2.0</option>
+            </select>
+
+            <span class="tool-divider"></span>
+            <button id="insertLinkBtn" class="tool-btn" title="Insert link">🔗</button>
+            <button id="insertImageBtn" class="tool-btn" title="Insert image">▧</button>
+            <button id="insertTableBtn" class="tool-btn" title="Insert table">▦</button>
+            <button id="importFontBtn" class="tool-btn" title="Import custom font">Aa+</button>
+            <input id="imageInput" type="file" accept="image/*" hidden>
+            <input id="fontInput" type="file" accept=".ttf,.otf,.woff,.woff2" hidden>
+          </div>
+
+          <div class="toolbar-row secondary-toolbar">
+            <button id="findBtn" class="text-tool">Find / Replace</button>
+            <button id="pageSetupBtn" class="text-tool">Page setup</button>
+            <button id="clearFormatBtn" class="text-tool">Clear formatting</button>
+            <span class="toolbar-spacer"></span>
+            <span class="zoom-label">100%</span>
+          </div>
+        </div>
+
+        <div id="findPanel" class="find-panel" hidden>
+          <input id="findText" placeholder="Find text">
+          <input id="replaceText" placeholder="Replace with">
+          <button id="findNextBtn" class="btn btn-light">Find next</button>
+          <button id="replaceBtn" class="btn btn-light">Replace</button>
+          <button id="replaceAllBtn" class="btn btn-light">Replace all</button>
+          <button id="closeFindBtn" class="icon-close" title="Close">×</button>
+        </div>
+
+        <div class="editor-scroll">
+          <div id="page" class="page">
+            <div id="pageHeader" class="page-header" contenteditable="true" data-placeholder="Header (optional)"></div>
+            <div id="editor" class="editor" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true"><h1>KodoWord</h1><p>Document Editor</p></div>
+            <div id="pageFooter" class="page-footer" contenteditable="true" data-placeholder="Footer (optional)"></div>
+          </div>
+        </div>
+
+        <footer class="statusbar">
+          <span id="wordCount">0 words</span>
+          <span id="charCount">0 characters</span>
+          <span class="status-spacer"></span>
+          <span>Autosave enabled</span>
+        </footer>
+      </main>
+      <aside class="format-panel">
+        <div class="format-tabs"><button class="format-tab active">Format</button><button class="format-tab">Document</button></div>
+        <section class="format-section"><strong>Font</strong><label>Font Family<select id="sideFontFamily"><option value="Arial">Arial</option><option value="Calibri">Calibri</option><option value="Times New Roman">Times New Roman</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="SutonnyMJ">SutonnyMJ</option><option value="Noto Sans Bengali">Noto Sans Bengali</option><option value="SolaimanLipi">SolaimanLipi</option></select></label><label>Font Size<div class="side-size"><input id="sideFontSize" type="number" min="6" max="200" value="12"><button type="button" id="sideSizeDown">−</button><button type="button" id="sideSizeUp">＋</button></div></label><div class="side-colors"><label>Font Color<input id="sideTextColor" type="color" value="#202124"></label><label>Highlight<input id="sideHighlightColor" type="color" value="#fff176"></label></div></section>
+        <section class="format-section"><strong>Text Style</strong><div class="side-style"><button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="underline"><u>U</u></button><button data-cmd="strikeThrough"><s>S</s></button></div></section>
+        <section class="format-section"><strong>Paragraph</strong><div class="side-style"><button data-cmd="justifyLeft">☰</button><button data-cmd="justifyCenter">≡</button><button data-cmd="justifyRight">☷</button><button data-cmd="justifyFull">▤</button></div><label>Line Spacing<select id="sideLineSpacing"><option value="1">1.0</option><option value="1.15">1.15</option><option value="1.5" selected>1.5</option><option value="2">2.0</option></select></label></section>
+        <section class="format-section"><strong>Advanced</strong><button id="sideImportFont" class="upload-font">⇧　Upload Font</button><small>Import your custom font</small></section>
+      </aside>
+    </div>
+  </div>
+
+  <div id="exportOverlay" class="overlay" hidden>
+    <div class="popup export-popup">
+      <div class="popup-heading">
+        <strong>Export document</strong>
+        <button class="icon-close" data-close="exportOverlay">×</button>
+      </div>
+      <button class="export-option" data-export="pdf"><span>▤</span><span><strong>Download as PDF</strong><small>Save a PDF file directly</small></span></button>
+      <button class="export-option" data-export="html"><span>〈/〉</span><span><strong>Download as HTML</strong><small>Keep document formatting</small></span></button>
+      <button class="export-option" data-export="txt"><span>≡</span><span><strong>Download as TXT</strong><small>Plain text only</small></span></button>
+      <button class="export-option" data-export="docx"><span>W</span><span><strong>Download as Word-compatible HTML</strong><small>Open in Microsoft Word and save as DOCX</small></span></button>
+      <button class="export-option" data-export="print"><span>▣</span><span><strong>Print</strong><small>Open the device print options</small></span></button>
+    </div>
+  </div>
+
+  <div id="pageSetupOverlay" class="overlay" hidden>
+    <div class="popup setup-popup">
+      <div class="popup-heading">
+        <strong>Page setup</strong>
+        <button class="icon-close" data-close="pageSetupOverlay">×</button>
+      </div>
+      <label>Paper size
+        <select id="paperSize">
+          <option value="a4">A4</option>
+          <option value="letter">Letter</option>
+          <option value="legal">Legal</option>
+        </select>
+      </label>
+      <label>Orientation
+        <select id="pageOrientation">
+          <option value="portrait">Portrait</option>
+          <option value="landscape">Landscape</option>
+        </select>
+      </label>
+      <label>Margins (mm)
+        <input id="pageMargin" type="number" min="5" max="50" value="20">
+      </label>
+      <div class="popup-actions">
+        <button class="btn btn-light" data-close="pageSetupOverlay">Cancel</button>
+        <button id="applyPageSetupBtn" class="btn btn-primary">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="tableOverlay" class="overlay" hidden>
+    <div class="popup setup-popup">
+      <div class="popup-heading">
+        <strong>Insert table</strong>
+        <button class="icon-close" data-close="tableOverlay">×</button>
+      </div>
+      <label>Rows <input id="tableRows" type="number" min="1" max="30" value="3"></label>
+      <label>Columns <input id="tableCols" type="number" min="1" max="15" value="3"></label>
+      <div class="popup-actions">
+        <button class="btn btn-light" data-close="tableOverlay">Cancel</button>
+        <button id="createTableBtn" class="btn btn-primary">Insert table</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="documentMenu" class="context-menu" hidden>
+    <button data-doc-action="rename">✎ Rename</button>
+    <button data-doc-action="duplicate">▣ Duplicate</button>
+    <button class="danger" data-doc-action="delete">⌫ Delete</button>
+    <button data-doc-action="close">Cancel</button>
+  </div>
+
+  <div id="objectMenu" class="context-menu" hidden>
+    <button data-object-action="move">↔ Move object</button>
+    <button data-object-action="front">↑ Bring to front</button>
+    <button data-object-action="back">↓ Send to back</button>
+    <button data-object-action="delete" class="danger">⌫ Delete object</button>
+    <button data-object-action="close">Cancel</button>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="index.js"></script>
+</body>
+</html>
