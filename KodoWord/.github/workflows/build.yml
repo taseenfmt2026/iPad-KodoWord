@@ -3,7 +3,7 @@ name: Build KodoWord IPA
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   build:
